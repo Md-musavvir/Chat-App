@@ -88,5 +88,26 @@ const loginUser = AsyncHandler(async (req, res) => {
       new ApiResponse(200, { user: loggedInUser }, "User loggedin succesfully"),
     );
 });
+const getUser = AsyncHandler(async (req, res) => {
+  const keyword = req.query.search;
 
-export { loginUser, registerUser };
+  if (!keyword) {
+    throw new ApiError(400, "keyword is required");
+  }
+
+  const users = await User.find({
+    _id: { $ne: req.user._id },
+    $or: [
+      { name: { $regex: keyword, $options: "i" } },
+      { email: { $regex: keyword, $options: "i" } },
+    ],
+  });
+
+  if (users.length === 0) {
+    throw new ApiError(404, "no users found");
+  }
+
+  res.status(200).json(new ApiResponse(200, users, "here is users list"));
+});
+
+export { getUser, loginUser, registerUser };
