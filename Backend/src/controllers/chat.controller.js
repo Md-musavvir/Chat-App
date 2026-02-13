@@ -4,56 +4,59 @@ import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import AsyncHandler from "../utils/AsyncHandler.js";
 
+/* ================= ACCESS PRIVATE CHAT ================= */
 const accessChat = AsyncHandler(async (req, res) => {
   const { userId } = req.body;
 
   if (!userId) {
-    throw new ApiError(400, "receiver id is required");
+    throw new ApiError(400, "Receiver id is required");
   }
 
-  let isChat = await Chat.findOne({
+  let existingChat = await Chat.findOne({
     isGroupChat: false,
     users: { $all: [req.user._id, userId] },
   })
     .populate("users", "-password")
-    .populate("latestMessage");
+    .populate("latestMessage")
+    .populate("groupAdmin", "-password");
 
-  if (isChat) {
-    isChat = await User.populate(isChat, {
+  if (existingChat) {
+    existingChat = await User.populate(existingChat, {
       path: "latestMessage.sender",
       select: "username email",
     });
 
-    return res.status(200).json(new ApiResponse(200, isChat, "here is chat"));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, existingChat, "Chat already exists"));
   }
 
   const createdChat = await Chat.create({
-    chatName: "sender",
+    chatName: null,
     isGroupChat: false,
     users: [req.user._id, userId],
   });
 
-  if (!createdChat) {
-    throw new ApiError(400, "something went wrong while creating chat");
-  }
+  let fullChat = await Chat.findById(createdChat._id)
+    .populate("users", "-password")
+    .populate("latestMessage")
+    .populate("groupAdmin", "-password");
 
-  const fullChat = await Chat.findById(createdChat._id).populate(
-    "users",
-    "-password",
-  );
+  fullChat = await User.populate(fullChat, {
+    path: "latestMessage.sender",
+    select: "username email",
+  });
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, fullChat, "created chat successfully"));
+  return res
+    .status(201)
+    .json(new ApiResponse(201, fullChat, "Chat created successfully"));
 });
+
+/* ================= FETCH USER CHATS ================= */
 const fetchChat = AsyncHandler(async (req, res) => {
-  const user_id = req.user._id;
+  const userId = req.user._id;
 
-  if (!user_id) {
-    throw new ApiError(400, "user id is required to fetch chats");
-  }
-
-  let chats = await Chat.find({ users: user_id })
+  let chats = await Chat.find({ users: userId })
     .populate("users", "-password")
     .populate("groupAdmin", "-password")
     .populate("latestMessage")
@@ -64,42 +67,57 @@ const fetchChat = AsyncHandler(async (req, res) => {
     select: "username email",
   });
 
-  if (!chats || chats.length === 0) {
-    throw new ApiError(404, "no chats exist");
-  }
-
-  res.status(200).json(new ApiResponse(200, chats, "here are your chats"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, chats, "Chats fetched successfully"));
 });
+
+/* ================= CREATE GROUP ================= */
 const createGroup = AsyncHandler(async (req, res) => {
   const { groupName, usersList } = req.body;
+
   if (!groupName || !usersList) {
-    throw new ApiError(400, " information is required");
+    throw new ApiError(400, "Group name and users list are required");
   }
+
   let users;
+
   try {
     users = Array.isArray(usersList) ? usersList : JSON.parse(usersList);
   } catch {
-    throw new ApiError(400, "invalid users list format");
+    throw new ApiError(400, "Invalid users list format");
   }
 
   users.push(req.user._id);
+  users = [...new Set(users.map((id) => id.toString()))];
+
   if (users.length < 2) {
-    throw new ApiError(400, "group should have atleast 2 members");
+    throw new ApiError(400, "Group must have at least 2 members");
   }
+
   const createdGroup = await Chat.create({
-    chatName: groupName,
+    chatName: groupName.trim(),
     isGroupChat: true,
-    users: users,
+    users,
     groupAdmin: req.user._id,
   });
-  const chat = await Chat.findById(createdGroup._id);
-  if (!chat) {
-    throw new ApiError(500, "something went wrong while creating group");
-  }
-  res
-    .status(200)
-    .json(new ApiResponse(200, { chat }, "group created successfully"));
+
+  let fullGroup = await Chat.findById(createdGroup._id)
+    .populate("users", "-password")
+    .populate("groupAdmin", "-password")
+    .populate("latestMessage");
+
+  fullGroup = await User.populate(fullGroup, {
+    path: "latestMessage.sender",
+    select: "username email",
+  });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, fullGroup, "Group created successfully"));
 });
+
+/* ================= ADD TO GROUP ================= */
 const addToGroup = AsyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
 
@@ -109,30 +127,38 @@ const addToGroup = AsyncHandler(async (req, res) => {
 
   const chat = await Chat.findById(chatId);
 
-  if (!chat) {
-    throw new ApiError(404, "chat not found");
-  }
-
-  if (!chat.isGroupChat) {
-    throw new ApiError(400, "cannot add users to private chat");
-  }
+  if (!chat) throw new ApiError(404, "Chat not found");
+  if (!chat.isGroupChat)
+    throw new ApiError(400, "Cannot add users to private chat");
 
   if (chat.groupAdmin.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, "only admin can add users");
+    throw new ApiError(403, "Only admin can add users");
   }
 
-  const updatedGroup = await Chat.findByIdAndUpdate(
+  if (chat.users.some((u) => u.toString() === userId.toString())) {
+    throw new ApiError(400, "User already in group");
+  }
+
+  let updatedGroup = await Chat.findByIdAndUpdate(
     chatId,
     { $addToSet: { users: userId } },
     { new: true },
   )
     .populate("users", "-password")
-    .populate("groupAdmin", "-password");
+    .populate("groupAdmin", "-password")
+    .populate("latestMessage");
 
-  res
+  updatedGroup = await User.populate(updatedGroup, {
+    path: "latestMessage.sender",
+    select: "username email",
+  });
+
+  return res
     .status(200)
-    .json(new ApiResponse(200, updatedGroup, "user added successfully"));
+    .json(new ApiResponse(200, updatedGroup, "User added successfully"));
 });
+
+/* ================= REMOVE FROM GROUP ================= */
 const removeFromGroup = AsyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
 
@@ -142,33 +168,35 @@ const removeFromGroup = AsyncHandler(async (req, res) => {
 
   const chat = await Chat.findById(chatId);
 
-  if (!chat) {
-    throw new ApiError(404, "chat not found");
-  }
-
-  if (!chat.isGroupChat) {
-    throw new ApiError(400, "cannot remove users from private chat");
-  }
+  if (!chat) throw new ApiError(404, "Chat not found");
+  if (!chat.isGroupChat)
+    throw new ApiError(400, "Cannot remove users from private chat");
 
   if (chat.groupAdmin.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, "only admin can remove users");
+    throw new ApiError(403, "Only admin can remove users");
   }
 
   if (userId.toString() === req.user._id.toString()) {
-    throw new ApiError(400, "admin cannot remove themselves");
+    throw new ApiError(400, "Admin cannot remove themselves");
   }
 
-  const updatedGroup = await Chat.findByIdAndUpdate(
+  let updatedGroup = await Chat.findByIdAndUpdate(
     chatId,
     { $pull: { users: userId } },
     { new: true },
   )
     .populate("users", "-password")
-    .populate("groupAdmin", "-password");
+    .populate("groupAdmin", "-password")
+    .populate("latestMessage");
 
-  res
+  updatedGroup = await User.populate(updatedGroup, {
+    path: "latestMessage.sender",
+    select: "username email",
+  });
+
+  return res
     .status(200)
-    .json(new ApiResponse(200, updatedGroup, "user removed successfully"));
+    .json(new ApiResponse(200, updatedGroup, "User removed successfully"));
 });
 
 export { accessChat, addToGroup, createGroup, fetchChat, removeFromGroup };

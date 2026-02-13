@@ -1,13 +1,14 @@
-import { setServers } from "node:dns/promises"; // Import the promise-based version
+import {
+  setServers,
+} from 'node:dns/promises'; // Import the promise-based version
 
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-import DB_NAME from "../constants.js";
+import DB_NAME from '../constants.js';
 
 const connectDb = async () => {
   try {
-    // FORCE Node to use reliable DNS servers (Google & Cloudflare)
-    // This fixes the querySrv ECONNREFUSED bug in newer Node versions
+    
     setServers(["8.8.8.8", "1.1.1.1"]);
 
     const connectionInstance = await mongoose.connect(

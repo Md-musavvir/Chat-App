@@ -85,29 +85,63 @@ const loginUser = AsyncHandler(async (req, res) => {
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
     .json(
-      new ApiResponse(200, { user: loggedInUser }, "User loggedin succesfully"),
+      new ApiResponse(
+        200,
+        {
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
+        },
+        "User loggedin succesfully",
+      ),
     );
 });
+const logoutUser = AsyncHandler(async (req, res) => {
+  console.log("out");
+  // Remove refresh token from DB
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $unset: { refreshToken: 1 },
+    },
+    { new: true },
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User logged out successfully"));
+});
+
 const getUser = AsyncHandler(async (req, res) => {
-  const keyword = req.query.search;
+  const keyword = req.query.search?.trim();
 
   if (!keyword) {
-    throw new ApiError(400, "keyword is required");
+    return res
+      .status(200)
+      .json(new ApiResponse(200, [], "No search keyword provided"));
   }
+
+  // Escape regex special characters
+  const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
   const users = await User.find({
     _id: { $ne: req.user._id },
     $or: [
-      { name: { $regex: keyword, $options: "i" } },
-      { email: { $regex: keyword, $options: "i" } },
+      { username: { $regex: escapedKeyword, $options: "i" } },
+      { email: { $regex: escapedKeyword, $options: "i" } },
     ],
-  });
+  }).select("-password -refreshToken");
 
-  if (users.length === 0) {
-    throw new ApiError(404, "no users found");
-  }
-
-  res.status(200).json(new ApiResponse(200, users, "here is users list"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, users, "Users fetched successfully"));
 });
 
-export { getUser, loginUser, registerUser };
+export { getUser, loginUser, logoutUser, registerUser };
