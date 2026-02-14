@@ -34,7 +34,7 @@ function ChatLayout() {
 
     if (socketRef.current) return;
 
-    const socket = io("http://localhost:9000", {
+    const socket = io(`${import.meta.env.VITE_API_URL}`, {
       auth: { token: accessToken },
       withCredentials: true,
       pingTimeout: 60000,
@@ -116,7 +116,7 @@ function ChatLayout() {
         }
 
         const { data } = await axios.get(
-          "http://localhost:9000/api/v1/chat/fetchchat",
+          `${import.meta.env.VITE_API_URL}/api/v1/chat/fetchchat`,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
             withCredentials: true,
@@ -134,7 +134,7 @@ function ChatLayout() {
 
           if (matchedChat) {
             const messagesRes = await axios.get(
-              `http://localhost:9000/api/v1/message/getAllMessages/${matchedChat._id}`,
+              `${import.meta.env.VITE_API_URL}/api/v1/message/getAllMessages/${matchedChat._id}`,
               {
                 headers: { Authorization: `Bearer ${accessToken}` },
                 withCredentials: true,
@@ -184,7 +184,7 @@ function ChatLayout() {
 
     try {
       const { data } = await axios.get(
-        "http://localhost:9000/api/v1/chat/fetchchat",
+        `${import.meta.env.VITE_API_URL}/api/v1/chat/fetchchat`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
           withCredentials: true,
@@ -207,7 +207,7 @@ function ChatLayout() {
       }
 
       const { data } = await axios.get(
-        `http://localhost:9000/api/v1/message/getAllMessages/${chat._id}`,
+        `${import.meta.env.VITE_API_URL}/api/v1/message/getAllMessages/${chat._id}`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
           withCredentials: true,
@@ -236,7 +236,7 @@ function ChatLayout() {
 
     try {
       const { data } = await axios.post(
-        "http://localhost:9000/api/v1/message/sendMessage",
+        `${import.meta.env.VITE_API_URL}/api/v1/message/sendMessage`,
         {
           chatId: selectedChat._id,
           content,
@@ -280,7 +280,7 @@ function ChatLayout() {
       }
 
       await axios.post(
-        "http://localhost:9000/api/v1/user/logout",
+        `${import.meta.env.VITE_API_URL}/api/v1/user/logout`,
         {},
         { withCredentials: true },
       );

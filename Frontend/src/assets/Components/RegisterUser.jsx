@@ -22,7 +22,7 @@ function RegisterUser() {
 
     try {
       const response = await axios.post(
-        "http://localhost:9000/api/v1/user/register",
+        `${import.meta.env.VITE_API_URL}/api/v1/user/register`,
         {
           username: username.trim(),
           email: email.trim(),

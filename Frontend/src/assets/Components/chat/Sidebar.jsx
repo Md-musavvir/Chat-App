@@ -26,7 +26,7 @@ function Sidebar({
     setIsSearching(true);
     try {
       const { data } = await axios.get(
-        `http://localhost:9000/api/v1/user/getUser?search=${search}`,
+        `${import.meta.env.VITE_API_URL}/api/v1/user/getUser?search=${search}`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
           withCredentials: true,
@@ -45,7 +45,7 @@ function Sidebar({
     if (!accessToken) return;
 
     const { data } = await axios.post(
-      "http://localhost:9000/api/v1/chat/accessChat",
+      `${import.meta.env.VITE_API_URL}/api/v1/chat/accessChat`,
       { userId },
       {
         headers: { Authorization: `Bearer ${accessToken}` },

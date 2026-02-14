@@ -22,7 +22,7 @@ function GroupModal({ close, fetchChats }) {
 
     try {
       const { data } = await axios.get(
-        `http://localhost:9000/api/v1/user/getUser?search=${search}`,
+        `${import.meta.env.VITE_API_URL}/api/v1/user/getUser?search=${search}`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
           withCredentials: true,
@@ -56,7 +56,7 @@ function GroupModal({ close, fetchChats }) {
 
     try {
       await axios.post(
-        "http://localhost:9000/api/v1/chat/creategroup",
+        `${import.meta.env.VITE_API_URL}/api/v1/chat/creategroup`,
         {
           groupName: groupName.trim(),
           usersList: JSON.stringify(members.map((m) => m._id)),

@@ -18,7 +18,7 @@ function LoginUser({ setIsLoggedIn }) {
 
     try {
       const response = await axios.post(
-        "http://localhost:9000/api/v1/user/login",
+        `${import.meta.env.VITE_API_URL}/api/v1/user/login`,
         {
           email: email.trim(),
           password: password.trim(),
