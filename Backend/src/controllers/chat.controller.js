@@ -4,7 +4,6 @@ import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import AsyncHandler from "../utils/AsyncHandler.js";
 
-/* ================= ACCESS PRIVATE CHAT ================= */
 const accessChat = AsyncHandler(async (req, res) => {
   const { userId } = req.body;
 
@@ -52,7 +51,6 @@ const accessChat = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(201, fullChat, "Chat created successfully"));
 });
 
-/* ================= FETCH USER CHATS ================= */
 const fetchChat = AsyncHandler(async (req, res) => {
   const userId = req.user._id;
 
@@ -72,7 +70,6 @@ const fetchChat = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, chats, "Chats fetched successfully"));
 });
 
-/* ================= CREATE GROUP ================= */
 const createGroup = AsyncHandler(async (req, res) => {
   const { groupName, usersList } = req.body;
 
@@ -117,7 +114,6 @@ const createGroup = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(201, fullGroup, "Group created successfully"));
 });
 
-/* ================= ADD TO GROUP ================= */
 const addToGroup = AsyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
 
@@ -158,7 +154,6 @@ const addToGroup = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedGroup, "User added successfully"));
 });
 
-/* ================= REMOVE FROM GROUP ================= */
 const removeFromGroup = AsyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
 

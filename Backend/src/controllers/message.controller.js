@@ -11,23 +11,27 @@ const sendMessage = AsyncHandler(async (req, res) => {
     throw new ApiError(400, "chatId and content are required");
   }
 
-  // Ensure chat exists
   const chatExists = await Chat.findById(chatId);
   if (!chatExists) {
     throw new ApiError(404, "Chat not found");
   }
 
-  // Create message
   let message = await Message.create({
     sender: req.user._id,
     content: content.trim(),
     chat: chatId,
   });
 
-  // Populate sender only (frontend needs this)
-  message = await message.populate("sender", "username email");
+  message = await Message.findById(message._id)
+    .populate("sender", "username email")
+    .populate({
+      path: "chat",
+      populate: {
+        path: "users",
+        select: "username email",
+      },
+    });
 
-  // Update latestMessage AND force updatedAt refresh
   await Chat.findByIdAndUpdate(
     chatId,
     {
@@ -49,14 +53,10 @@ const getAllMessages = AsyncHandler(async (req, res) => {
     throw new ApiError(400, "chatId is required");
   }
 
-  const chatExists = await Chat.findById(chatId);
-  if (!chatExists) {
-    throw new ApiError(404, "Chat not found");
-  }
-
   const messages = await Message.find({ chat: chatId })
     .populate("sender", "username email")
-    .sort({ createdAt: 1 });
+    .sort({ createdAt: 1 })
+    .lean();
 
   return res
     .status(200)

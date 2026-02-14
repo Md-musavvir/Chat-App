@@ -1,12 +1,13 @@
-import cookieParser from 'cookie-parser';
-import cors from 'cors';
-import express from 'express';
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import express from "express";
 
-import chatRouter from './routes/chat.routes.js';
-import messageRouter from './routes/message.routes.js';
-import userRouter from './routes/user.routes.js';
+import chatRouter from "./routes/chat.routes.js";
+import messageRouter from "./routes/message.routes.js";
+import userRouter from "./routes/user.routes.js";
 
 const app = express();
+
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -15,6 +16,7 @@ app.use(
     credentials: true,
   }),
 );
+
 app.use(express.json({ strict: false, limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));

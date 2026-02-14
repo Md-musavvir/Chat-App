@@ -12,8 +12,12 @@ const messageSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Chat",
       required: true,
+      index: true,
     },
   },
   { timestamps: true },
 );
+
+messageSchema.index({ chat: 1, createdAt: 1 });
+
 export const Message = mongoose.model("Message", messageSchema);

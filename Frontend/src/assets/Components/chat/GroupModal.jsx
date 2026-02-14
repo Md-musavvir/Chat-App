@@ -19,6 +19,7 @@ function GroupModal({ close, fetchChats }) {
 
     setIsSearching(true);
     setError("");
+
     try {
       const { data } = await axios.get(
         `http://localhost:9000/api/v1/user/getUser?search=${search}`,
@@ -27,8 +28,9 @@ function GroupModal({ close, fetchChats }) {
           withCredentials: true,
         },
       );
+
       setResults(data.data);
-    } catch (err) {
+    } catch {
       setError("Failed to search users");
     } finally {
       setIsSearching(false);
@@ -40,6 +42,7 @@ function GroupModal({ close, fetchChats }) {
       setError("Please enter a group name");
       return;
     }
+
     if (members.length === 0) {
       setError("Please add at least one member");
       return;
@@ -50,6 +53,7 @@ function GroupModal({ close, fetchChats }) {
 
     setIsCreating(true);
     setError("");
+
     try {
       await axios.post(
         "http://localhost:9000/api/v1/chat/creategroup",
@@ -85,24 +89,18 @@ function GroupModal({ close, fetchChats }) {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      searchUsers();
-    }
+    if (e.key === "Enter") searchUsers();
   };
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center px-4 z-50 animate-fade-in">
       <div className="w-full max-w-md relative">
-        {/* Gradient glow effect */}
         <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-2xl blur opacity-30 animate-pulse"></div>
 
-        {/* Modal card */}
         <div className="relative bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-800/50 overflow-hidden">
-          {/* Gradient accent line */}
           <div className="h-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600"></div>
 
           <div className="p-6">
-            {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                 Create Group
@@ -127,7 +125,6 @@ function GroupModal({ close, fetchChats }) {
               </button>
             </div>
 
-            {/* Group Name Input */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Group Name
@@ -136,32 +133,26 @@ function GroupModal({ close, fetchChats }) {
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
                 placeholder="Enter group name..."
-                className="w-full px-4 py-3 rounded-xl bg-slate-800/50 text-white
-                         placeholder-slate-500 border border-slate-700/50
-                         focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500
-                         transition-all duration-300"
                 maxLength={50}
+                className="w-full px-4 py-3 rounded-xl bg-slate-800/50 text-white placeholder-slate-500 border border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all duration-300"
               />
             </div>
 
-            {/* Search Users */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Add Members
               </label>
+
               <div className="relative mb-2">
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Search users..."
-                  className="w-full px-4 py-3 pl-10 rounded-xl bg-slate-800/50 text-white
-                           placeholder-slate-500 border border-slate-700/50
-                           focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
-                           transition-all duration-300"
+                  className="w-full px-4 py-3 pl-10 rounded-xl bg-slate-800/50 text-white placeholder-slate-500 border border-slate-700/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300"
                 />
                 <svg
-                  className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500"
+                  className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -174,50 +165,19 @@ function GroupModal({ close, fetchChats }) {
                   />
                 </svg>
               </div>
+
               <button
                 onClick={searchUsers}
                 disabled={isSearching || !search.trim()}
-                className="w-full py-2.5 rounded-xl font-semibold text-white
-                         bg-gradient-to-r from-blue-600 to-purple-600
-                         hover:from-blue-500 hover:to-purple-500
-                         disabled:from-slate-700 disabled:to-slate-700 disabled:cursor-not-allowed
-                         transition-all duration-300 transform hover:scale-[1.02]
-                         shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40
-                         disabled:shadow-none"
+                className="w-full py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-slate-700 disabled:to-slate-700 disabled:cursor-not-allowed transition-all duration-300"
               >
-                {isSearching ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        fill="none"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Searching...
-                  </span>
-                ) : (
-                  "Search"
-                )}
+                {isSearching ? "Searching..." : "Search"}
               </button>
             </div>
 
-            {/* Search Results */}
             {results.length > 0 && (
               <div className="mb-4 max-h-48 overflow-y-auto custom-scrollbar bg-slate-800/30 rounded-xl border border-slate-700/50">
                 <div className="p-2">
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2 py-1">
-                    Search Results
-                  </p>
                   {results.map((u) => (
                     <div
                       key={u._id}
@@ -233,58 +193,26 @@ function GroupModal({ close, fetchChats }) {
                         </p>
                         <p className="text-xs text-slate-500">{u.email}</p>
                       </div>
-                      <svg
-                        className="w-5 h-5 text-slate-600 group-hover:text-blue-400 transition-colors"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Selected Members */}
             {members.length > 0 && (
               <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Selected Members ({members.length})
-                </label>
                 <div className="flex flex-wrap gap-2 p-3 bg-slate-800/30 rounded-xl border border-slate-700/50 max-h-32 overflow-y-auto custom-scrollbar">
                   {members.map((m) => (
                     <span
                       key={m._id}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full font-medium
-                               bg-gradient-to-r from-emerald-600 to-teal-600
-                               hover:from-emerald-500 hover:to-teal-500
-                               transition-all duration-200 group"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full font-medium bg-gradient-to-r from-emerald-600 to-teal-600 text-white"
                     >
                       <span className="text-sm">{m.username}</span>
                       <button
                         onClick={() => removeMember(m._id)}
                         className="w-4 h-4 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
                       >
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
+                        ×
                       </button>
                     </span>
                   ))}
@@ -292,72 +220,27 @@ function GroupModal({ close, fetchChats }) {
               </div>
             )}
 
-            {/* Error Message */}
             {error && (
-              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 backdrop-blur-sm">
-                <p className="text-center text-red-400 text-sm font-medium flex items-center justify-center gap-2">
-                  <svg
-                    className="w-4 h-4"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30">
+                <p className="text-center text-red-400 text-sm font-medium">
                   {error}
                 </p>
               </div>
             )}
 
-            {/* Action Buttons */}
             <div className="flex gap-3">
               <button
                 onClick={createGroup}
                 disabled={isCreating}
-                className="flex-1 py-3 rounded-xl font-semibold text-white
-                         bg-gradient-to-r from-emerald-600 to-teal-600
-                         hover:from-emerald-500 hover:to-teal-500
-                         disabled:from-slate-700 disabled:to-slate-700 disabled:cursor-not-allowed
-                         transition-all duration-300 transform hover:scale-[1.02]
-                         shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40
-                         disabled:shadow-none"
+                className="flex-1 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:from-slate-700 disabled:to-slate-700 disabled:cursor-not-allowed transition-all duration-300"
               >
-                {isCreating ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        fill="none"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Creating...
-                  </span>
-                ) : (
-                  "Create Group"
-                )}
+                {isCreating ? "Creating..." : "Create Group"}
               </button>
+
               <button
                 onClick={close}
                 disabled={isCreating}
-                className="flex-1 py-3 rounded-xl font-semibold text-white
-                         bg-gradient-to-r from-red-600 to-pink-600
-                         hover:from-red-500 hover:to-pink-500
-                         disabled:opacity-50 disabled:cursor-not-allowed
-                         transition-all duration-300 transform hover:scale-[1.02]
-                         shadow-lg shadow-red-500/20 hover:shadow-red-500/40"
+                className="flex-1 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
               >
                 Cancel
               </button>
@@ -366,7 +249,6 @@ function GroupModal({ close, fetchChats }) {
         </div>
       </div>
 
-      {/* Custom scrollbar styles */}
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
@@ -381,6 +263,9 @@ function GroupModal({ close, fetchChats }) {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(71, 85, 105, 0.7);
         }
+        .animate-fade-in {
+          animation: fade-in 0.2s ease-out;
+        }
         @keyframes fade-in {
           from {
             opacity: 0;
@@ -388,9 +273,6 @@ function GroupModal({ close, fetchChats }) {
           to {
             opacity: 1;
           }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.2s ease-out;
         }
       `}</style>
     </div>

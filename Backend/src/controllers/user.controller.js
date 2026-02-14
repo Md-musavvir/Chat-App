@@ -98,7 +98,7 @@ const loginUser = AsyncHandler(async (req, res) => {
 });
 const logoutUser = AsyncHandler(async (req, res) => {
   console.log("out");
-  // Remove refresh token from DB
+
   await User.findByIdAndUpdate(
     req.user._id,
     {
