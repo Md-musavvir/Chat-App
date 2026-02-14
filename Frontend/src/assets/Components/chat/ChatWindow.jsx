@@ -36,7 +36,6 @@ function ChatWindow({
     selectedChat.groupAdmin &&
     selectedChat.groupAdmin._id?.toString() === user._id?.toString();
 
-  // ================= ADD USER =================
   const handleAddUser = async (userId) => {
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) return;
@@ -61,7 +60,6 @@ function ChatWindow({
     }
   };
 
-  // ================= REMOVE USER =================
   const handleRemoveUser = async (userId) => {
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) return;
@@ -83,7 +81,6 @@ function ChatWindow({
     }
   };
 
-  // ================= SEARCH USERS =================
   const searchUsers = async () => {
     if (!search.trim()) return;
 
@@ -111,7 +108,6 @@ function ChatWindow({
 
   return (
     <div className="flex flex-col flex-1 bg-slate-950 text-white">
-      {/* ================= HEADER ================= */}
       <div className="px-6 py-4 border-b border-slate-800 bg-slate-900">
         {/* Chat Title */}
         <h2 className="text-lg font-bold">
@@ -120,10 +116,8 @@ function ChatWindow({
             : selectedChat.users.find((u) => u._id !== user._id)?.username}
         </h2>
 
-        {/* Typing Indicator */}
         {isTyping && <p className="text-xs text-green-400 mt-1">typing...</p>}
 
-        {/* ================= GROUP CONTROLS ================= */}
         {selectedChat.isGroupChat && (
           <div className="mt-4">
             {/* Member List */}
@@ -185,7 +179,6 @@ function ChatWindow({
         )}
       </div>
 
-      {/* ================= MESSAGES ================= */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 ? (
           <div className="text-center text-slate-500 text-sm">
