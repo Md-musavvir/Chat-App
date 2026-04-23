@@ -12,7 +12,7 @@ const accessChat = AsyncHandler(async (req, res) => {
   }
   console.log("Incoming userId:", userId, typeof userId);
 
-  if (userId === "AI_BUDDY") {
+  if (userId && userId.toString().toUpperCase() === "AI_BUDDY") {
     return res.status(200).json(
       new ApiResponse(
         200,
