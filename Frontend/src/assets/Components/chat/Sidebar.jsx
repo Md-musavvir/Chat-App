@@ -141,7 +141,11 @@ function Sidebar({
           {results.map((u) => (
             <div
               key={u._id}
-              onClick={() => accessChat(u._id)}
+              onClick={() => {
+                console.log("Clicked user:", u); // debug
+                const id = u._id ? u._id : "AI_BUDDY";
+                accessChat(id);
+              }}
               className="px-4 py-3 hover:bg-slate-800/50 cursor-pointer transition-all duration-200 border-b border-slate-800/30"
             >
               <div className="flex items-center gap-3">
