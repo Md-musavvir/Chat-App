@@ -1,3 +1,5 @@
+import AsyncHandler from "../utils/AsyncHandler.js";
+
 export const chatWithAI = AsyncHandler(async (req, res) => {
   const { message } = req.body;
 
