@@ -1,3 +1,7 @@
+import axios from "axios";
+
+import ApiError from "../utils/ApiError.js";
+import ApiResponse from "../utils/ApiResponse.js";
 import AsyncHandler from "../utils/AsyncHandler.js";
 
 export const chatWithAI = AsyncHandler(async (req, res) => {
