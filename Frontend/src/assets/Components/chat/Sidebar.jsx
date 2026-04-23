@@ -54,10 +54,15 @@ function Sidebar({
     );
 
     setSelectedChat(data.data);
-    fetchMessages(data.data);
+
+    if (data.data.isAIChat) {
+      // 👉 AI chat → no DB messages
+      setMessages([]);
+    } else {
+      fetchMessages(data.data);
+    }
+
     fetchChats();
-    setResults([]);
-    setSearch("");
   };
 
   const getChatName = (chat) => {
@@ -142,7 +147,7 @@ function Sidebar({
             <div
               key={u._id}
               onClick={() => {
-                console.log("Clicked user:", u); // debug
+                console.log("Clicked user:", u);
                 const id = u._id ? u._id : "AI_BUDDY";
                 accessChat(id);
               }}
