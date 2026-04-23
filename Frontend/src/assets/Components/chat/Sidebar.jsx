@@ -54,15 +54,10 @@ function Sidebar({
     );
 
     setSelectedChat(data.data);
-
-    if (data.data.isAIChat) {
-      // 👉 AI chat → no DB messages
-      setMessages([]);
-    } else {
-      fetchMessages(data.data);
-    }
-
+    fetchMessages(data.data);
     fetchChats();
+    setResults([]);
+    setSearch("");
   };
 
   const getChatName = (chat) => {
