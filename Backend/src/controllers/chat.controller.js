@@ -11,6 +11,33 @@ const accessChat = AsyncHandler(async (req, res) => {
     throw new ApiError(400, "Receiver id is required");
   }
 
+  if (userId === "AI_BUDDY") {
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          _id: "AI_CHAT",
+          chatName: "Ai_buddy",
+          isGroupChat: false,
+          isAIChat: true,
+          users: [
+            req.user,
+            {
+              _id: "AI_BUDDY",
+              username: "Ai_buddy",
+              email: "ai@bot.com",
+              isAI: true,
+            },
+          ],
+          latestMessage: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        "AI chat initialized",
+      ),
+    );
+  }
+
   let existingChat = await Chat.findOne({
     isGroupChat: false,
     users: { $all: [req.user._id, userId] },
