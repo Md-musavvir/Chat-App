@@ -10,7 +10,10 @@ const app = express();
 
 app.use(
   cors({
-    origin: "https://chat-app-1-x3ym.vercel.app",
+    origin: [
+      "https://chat-app-1-x3ym.vercel.app",
+      "https://chat-app-blond-tau-56.vercel.app",
+    ],
     credentials: true,
   }),
 );
