@@ -10,9 +10,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      callback(null, true);
-    },
+    origin: "https://chat-app-1-x3ym.vercel.app",
     credentials: true,
   }),
 );
