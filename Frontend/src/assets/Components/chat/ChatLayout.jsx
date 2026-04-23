@@ -127,7 +127,8 @@ function ChatLayout() {
         setChats(chatsList);
 
         const savedChatId = localStorage.getItem("selectedChatId");
-        if (savedChatId) {
+
+        if (savedChatId && savedChatId !== "AI_CHAT") {
           const matchedChat = chatsList.find(
             (chat) => chat._id === savedChatId,
           );
@@ -144,21 +145,8 @@ function ChatLayout() {
             setSelectedChat(matchedChat);
             setMessages(messagesRes.data.data);
 
-            const joinRoom = () => {
-              if (socketRef.current?.connected) {
-                socketRef.current.emit("join room", matchedChat._id);
-              }
-            };
-
             if (socketRef.current?.connected) {
-              joinRoom();
-            } else {
-              const waitForSocket = setInterval(() => {
-                if (socketRef.current?.connected) {
-                  joinRoom();
-                  clearInterval(waitForSocket);
-                }
-              }, 100);
+              socketRef.current.emit("join room", matchedChat._id);
             }
           }
         }
@@ -201,11 +189,22 @@ function ChatLayout() {
       return;
     }
 
+    // ✅ CHANGE 1: Virtual AI chat has no DB messages
+    if (chat?.isAIChat) {
+      if (selectedChat && socketRef.current) {
+        socketRef.current.emit("leave room", selectedChat._id);
+      }
+      setSelectedChat(chat);
+      setMessages([]); // clear previous chat messages
+      localStorage.removeItem("selectedChatId"); // don't persist virtual chat
+      setIsMobileSidebarOpen(false);
+      return; // ← bail before any axios call
+    }
+
     try {
       if (selectedChat && socketRef.current) {
         socketRef.current.emit("leave room", selectedChat._id);
       }
-
       const { data } = await axios.get(
         `${import.meta.env.VITE_API_URL}/api/v1/message/getAllMessages/${chat._id}`,
         {
@@ -213,15 +212,10 @@ function ChatLayout() {
           withCredentials: true,
         },
       );
-
       setSelectedChat(chat);
       setMessages(data.data);
       localStorage.setItem("selectedChatId", chat._id);
-
-      if (socketRef.current) {
-        socketRef.current.emit("join room", chat._id);
-      }
-
+      if (socketRef.current) socketRef.current.emit("join room", chat._id);
       setIsMobileSidebarOpen(false);
     } catch {}
   };
@@ -230,29 +224,55 @@ function ChatLayout() {
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken || !selectedChat) return;
 
-    if (socketRef.current) {
-      socketRef.current.emit("stop typing", selectedChat._id);
+    // ✅ CHANGE 2: AI chat — build message locally, call LLM endpoint
+    if (selectedChat.isAIChat) {
+      const userMsg = {
+        _id: `local_${Date.now()}`,
+        content,
+        sender: user,
+        createdAt: new Date().toISOString(),
+        isAI: false,
+      };
+      setMessages((prev) => [...prev, userMsg]);
+
+      try {
+        const { data } = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/v1/ai/chat`,
+          { message: content },
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            withCredentials: true,
+          },
+        );
+        const aiMsg = {
+          _id: `ai_${Date.now()}`,
+          content: data.reply,
+          sender: { _id: "AI_BUDDY", username: "Ai_buddy" },
+          createdAt: new Date().toISOString(),
+          isAI: true,
+        };
+        setMessages((prev) => [...prev, aiMsg]);
+      } catch {
+        // optionally show an error bubble
+      }
+      return; // ← bail before real sendMessage logic
     }
 
+    // Normal chat flow unchanged below
+    if (socketRef.current)
+      socketRef.current.emit("stop typing", selectedChat._id);
     try {
       const { data } = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/v1/message/sendMessage`,
-        {
-          chatId: selectedChat._id,
-          content,
-        },
+        { chatId: selectedChat._id, content },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
           withCredentials: true,
         },
       );
-
       const newMessage = data.data;
       setMessages((prev) => [...prev, newMessage]);
-
-      if (socketRef.current) {
-        socketRef.current.emit("new message", newMessage);
-      }
+      if (socketRef.current) socketRef.current.emit("new message", newMessage);
     } catch {}
   };
 
