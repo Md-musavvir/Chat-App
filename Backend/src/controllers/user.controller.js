@@ -21,6 +21,9 @@ const registerUser = AsyncHandler(async (req, res) => {
 
   const emailTrimmed = email.trim().toLowerCase();
   const usernameTrimmed = username.trim();
+  if (username === "AI_buddy") {
+    throw new ApiError(409, "you are not allowed to take this username");
+  }
 
   const existingUser = await User.findOne({
     $or: [{ email: emailTrimmed }, { username: usernameTrimmed }],
@@ -55,6 +58,7 @@ const registerUser = AsyncHandler(async (req, res) => {
 });
 const loginUser = AsyncHandler(async (req, res) => {
   const { email, password } = req.body;
+
   if (!email || !password) {
     throw new ApiError(400, "Credentials are required");
   }
@@ -64,6 +68,9 @@ const loginUser = AsyncHandler(async (req, res) => {
   const user = await User.findOne({ email: emailTrimmed });
   if (!user) {
     throw new ApiError(404, "user does not  exist");
+  }
+  if (user._id === "AI_BUDDY") {
+    throw new ApiError(403, "AI cannot login");
   }
   const isPasswordCorrect = await user.isPasswordCorrect(passwordTrimmed);
   if (!isPasswordCorrect) {
