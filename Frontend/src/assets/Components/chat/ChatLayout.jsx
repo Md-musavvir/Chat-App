@@ -246,7 +246,7 @@ function ChatLayout() {
         );
         const aiMsg = {
           _id: `ai_${Date.now()}`,
-          content: data.reply,
+          content: data.data.reply,
           sender: { _id: "AI_BUDDY", username: "Ai_buddy" },
           createdAt: new Date().toISOString(),
           isAI: true,
