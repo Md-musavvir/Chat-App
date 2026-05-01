@@ -13,17 +13,20 @@ export const chatWithAI = AsyncHandler(async (req, res) => {
 
   try {
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      "https://api.groq.com/openai/v1/chat/completions",
       {
-        contents: [
-          {
-            parts: [{ text: message }],
-          },
-        ],
+        model: "llama3-8b-8192",
+        messages: [{ role: "user", content: message }],
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
       },
     );
 
-    const reply = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const reply = response.data?.choices?.[0]?.message?.content;
 
     if (!reply) {
       throw new ApiError(500, "No response from AI");
@@ -34,6 +37,11 @@ export const chatWithAI = AsyncHandler(async (req, res) => {
       .json(new ApiResponse(200, { reply }, "AI response generated"));
   } catch (error) {
     console.error("AI ERROR:", error.response?.data || error.message);
+
+    if (error.response?.status === 429) {
+      throw new ApiError(503, "AI service rate limit reached, try again later");
+    }
+
     throw new ApiError(500, "AI service failed");
   }
 });
