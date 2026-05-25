@@ -1,7 +1,7 @@
-import { User } from "../models/user.models.js";
-import ApiError from "../utils/ApiError.js";
-import ApiResponse from "../utils/ApiResponse.js";
-import AsyncHandler from "../utils/AsyncHandler.js";
+import { User } from '../models/user.models.js';
+import ApiError from '../utils/ApiError.js';
+import ApiResponse from '../utils/ApiResponse.js';
+import AsyncHandler from '../utils/AsyncHandler.js';
 
 const generateTokens = async (id) => {
   const user = await User.findById(id);
@@ -128,6 +128,7 @@ const logoutUser = AsyncHandler(async (req, res) => {
 
 const getUser = AsyncHandler(async (req, res) => {
   const keyword = req.query.search?.trim();
+  const start = performance.now();
 
   if (!keyword) {
     return res
@@ -135,7 +136,6 @@ const getUser = AsyncHandler(async (req, res) => {
       .json(new ApiResponse(200, [], "No search keyword provided"));
   }
 
-  // Escape regex special characters
   const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
   const users = await User.find({
@@ -145,6 +145,8 @@ const getUser = AsyncHandler(async (req, res) => {
       { email: { $regex: escapedKeyword, $options: "i" } },
     ],
   }).select("-password -refreshToken");
+  const start = performance.now();
+  console.log(end - start);
 
   return res
     .status(200)
