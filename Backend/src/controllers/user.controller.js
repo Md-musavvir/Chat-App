@@ -128,7 +128,7 @@ const logoutUser = AsyncHandler(async (req, res) => {
 
 const getUser = AsyncHandler(async (req, res) => {
   const keyword = req.query.search?.trim();
-  const start = performance.now();
+  const st = performance.now();
 
   if (!keyword) {
     return res
@@ -146,7 +146,7 @@ const getUser = AsyncHandler(async (req, res) => {
     ],
   }).select("-password -refreshToken");
   const start = performance.now();
-  console.log(end - start);
+  console.log(end - st);
 
   return res
     .status(200)
