@@ -147,7 +147,7 @@ const getUser = AsyncHandler(async (req, res) => {
       { email: { $regex: escapedKeyword, $options: "i" } },
     ],
   }).select("-password -refreshToken");
-  const start = performance.now();
+  const end = performance.now();
   console.log(end - st);
 
   return res
