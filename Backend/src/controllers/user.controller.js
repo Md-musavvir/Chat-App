@@ -144,6 +144,8 @@ const getUser = AsyncHandler(async (req, res) => {
   const cachedUser = await redisClient.get(cacheKey);
   if (cachedUser) {
     console.log("cache hit");
+    const e = performance.now();
+    console.log(e - st);
     return res
       .status(200)
       .json(
