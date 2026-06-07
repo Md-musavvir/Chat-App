@@ -1,9 +1,10 @@
-import { performance } from 'perf_hooks';
+import { performance } from "perf_hooks";
 
-import { User } from '../models/user.models.js';
-import ApiError from '../utils/ApiError.js';
-import ApiResponse from '../utils/ApiResponse.js';
-import AsyncHandler from '../utils/AsyncHandler.js';
+import { User } from "../models/user.models.js";
+import ApiError from "../utils/ApiError.js";
+import ApiResponse from "../utils/ApiResponse.js";
+import AsyncHandler from "../utils/AsyncHandler.js";
+import redisClient from "./redisClient.js";
 
 const generateTokens = async (id) => {
   const user = await User.findById(id);
@@ -139,7 +140,21 @@ const getUser = AsyncHandler(async (req, res) => {
   }
 
   const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
+  const cacheKey = `user-search:${req.user._id}:${keyword.toLowerCase()}`;
+  const cachedUser = await redisClient.get(cacheKey);
+  if (cachedUser) {
+    console.log("cache hit");
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          JSON.parse(cachedUser),
+          "Users fetched successfully",
+        ),
+      );
+  }
+  console.log("cache miss");
   const users = await User.find({
     _id: { $ne: req.user._id },
     $or: [
@@ -149,6 +164,7 @@ const getUser = AsyncHandler(async (req, res) => {
   }).select("-password -refreshToken");
   const end = performance.now();
   console.log(end - st);
+  await redisClient.setEx(cacheKey, 300, JSON.stringify(users));
 
   return res
     .status(200)
