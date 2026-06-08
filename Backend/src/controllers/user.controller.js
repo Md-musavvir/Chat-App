@@ -141,6 +141,15 @@ const getUser = AsyncHandler(async (req, res) => {
 
   const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const cacheKey = `user-search:${req.user._id}:${keyword.toLowerCase()}`;
+  const rateLimitKey = `search-${req.user._id}`;
+  const currentCount = await redisClient.incr(rateLimitKey);
+  if (currentCount === 1) {
+    await redisClient.expire(rateLimitKey, 60);
+  }
+  if (currentCount > 6) {
+    throw new ApiError(429, "limit exceeded");
+  }
+
   const cachedUser = await redisClient.get(cacheKey);
   if (cachedUser) {
     console.log("cache hit");
