@@ -131,7 +131,6 @@ const logoutUser = AsyncHandler(async (req, res) => {
 
 const getUser = AsyncHandler(async (req, res) => {
   const keyword = req.query.search?.trim();
-  const st = performance.now();
 
   if (!keyword) {
     return res
@@ -140,6 +139,7 @@ const getUser = AsyncHandler(async (req, res) => {
   }
 
   const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
   const cacheKey = `user-search:${req.user._id}:${keyword.toLowerCase()}`;
   const rateLimitKey = `search-${req.user._id}`;
 
@@ -158,13 +158,15 @@ const getUser = AsyncHandler(async (req, res) => {
     throw new ApiError(429, "limit exceeded");
   }
 
+  const redisStart = performance.now();
+
   const cachedUser = await redisClient.get(cacheKey);
 
-  if (cachedUser) {
-    const afterCacheTime = performance.now() - st;
+  const redisEnd = performance.now();
 
+  if (cachedUser) {
     console.log("cache hit");
-    console.log(`After Cache (Redis): ${afterCacheTime.toFixed(2)} ms`);
+    console.log(`Redis Lookup Time: ${(redisEnd - redisStart).toFixed(2)} ms`);
 
     return res
       .status(200)
@@ -179,6 +181,8 @@ const getUser = AsyncHandler(async (req, res) => {
 
   console.log("cache miss");
 
+  const mongoStart = performance.now();
+
   const users = await User.find({
     _id: { $ne: req.user._id },
     $or: [
@@ -187,9 +191,9 @@ const getUser = AsyncHandler(async (req, res) => {
     ],
   }).select("-password -refreshToken");
 
-  const beforeCacheTime = performance.now() - st;
+  const mongoEnd = performance.now();
 
-  console.log(`Before Cache (MongoDB): ${beforeCacheTime.toFixed(2)} ms`);
+  console.log(`MongoDB Query Time: ${(mongoEnd - mongoStart).toFixed(2)} ms`);
 
   await redisClient.setEx(cacheKey, 300, JSON.stringify(users));
 
