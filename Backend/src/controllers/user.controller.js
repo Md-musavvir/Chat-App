@@ -146,6 +146,9 @@ const getUser = AsyncHandler(async (req, res) => {
   if (currentCount === 1) {
     await redisClient.expire(rateLimitKey, 60);
   }
+  if (currentCount < 5) {
+    console.log(`request number:${currentCount}`);
+  }
   if (currentCount > 6) {
     console.log("limit crossed");
     throw new ApiError(429, "limit exceeded");
