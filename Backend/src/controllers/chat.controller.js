@@ -10,7 +10,6 @@ const accessChat = AsyncHandler(async (req, res) => {
   if (!userId) {
     throw new ApiError(400, "Receiver id is required");
   }
-  console.log("Incoming userId:", userId, typeof userId);
 
   if (userId && userId.toString().toUpperCase() === "AI_BUDDY") {
     return res.status(200).json(

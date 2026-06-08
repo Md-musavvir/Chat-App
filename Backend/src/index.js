@@ -27,9 +27,6 @@ connectDb()
     });
 
     io.on("connection", (socket) => {
-      console.log("🔌 Socket connected:", socket.id);
-      console.log("   Total connections:", io.sockets.sockets.size);
-
       socket.on("setup", (user) => {
         if (!user || !user._id) {
           console.error("❌ Invalid user data in setup");
@@ -38,9 +35,6 @@ connectDb()
 
         socket.join(user._id);
         socket.emit("connected");
-        console.log(
-          `✅ User ${user.username || user._id} joined personal room: ${user._id}`,
-        );
       });
 
       socket.on("join room", (room) => {
@@ -50,12 +44,10 @@ connectDb()
         }
 
         socket.join(room);
-        console.log(`👥 Socket ${socket.id} joined chat room: ${room}`);
       });
 
       socket.on("leave room", (room) => {
         socket.leave(room);
-        console.log(`👋 Socket ${socket.id} left chat room: ${room}`);
       });
 
       socket.on("new message", (receivedMessage) => {
@@ -67,47 +59,30 @@ connectDb()
             return;
           }
 
-          console.log(`📨 New message in chat: ${chat._id}`);
-          console.log(
-            `   From: ${receivedMessage.sender.username || receivedMessage.sender._id}`,
-          );
-          console.log(`   Content: ${receivedMessage.content}`);
-
           chat.users.forEach((user) => {
             if (user._id === receivedMessage.sender._id) {
-              console.log(`   ⏭️  Skipping sender: ${user._id}`);
               return;
             }
-
-            console.log(`   📤 Emitting to user: ${user._id}`);
 
             io.to(user._id.toString()).emit(
               "message received",
               receivedMessage,
             );
           });
-
-          console.log(`✅ Message broadcast complete`);
         } catch (error) {
           console.error("❌ Error handling new message:", error);
         }
       });
 
       socket.on("typing", (room) => {
-        console.log(`⌨️  Typing in room: ${room}`);
         socket.to(room).emit("typing", room);
       });
 
       socket.on("stop typing", (room) => {
-        console.log(`⌨️  Stopped typing in room: ${room}`);
         socket.to(room).emit("stop typing", room);
       });
 
-      socket.on("disconnect", (reason) => {
-        console.log(`🔌 Socket disconnected: ${socket.id}`);
-        console.log(`   Reason: ${reason}`);
-        console.log("   Total connections:", io.sockets.sockets.size);
-      });
+      socket.on("disconnect", () => {});
 
       socket.on("error", (error) => {
         console.error("❌ Socket error:", error);
