@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { Server } from "socket.io";
 
 import app from "./app.js";
+import redisClient from "./controllers/redisClient.js";
 import connectDb from "./db/dbConnection.js";
 
 dotenv.config();
@@ -19,8 +20,7 @@ const io = new Server(server, {
   },
   pingTimeout: 60000,
 });
-const onlineUsers = new Map();
-const lastSeen = new Map();
+const redis = redisClient();
 
 connectDb()
   .then(() => {
@@ -29,16 +29,18 @@ connectDb()
     });
 
     io.on("connection", (socket) => {
-      socket.on("setup", (user) => {
+      socket.on("setup", async (user) => {
         if (!user || !user._id) {
           console.error("❌ Invalid user data in setup");
           return;
         }
-        onlineUsers.set(user._id.toString(), socket.id);
-        lastSeen.delete(user._id.toString());
-        io.emit("online-users", Array.from(onlineUsers.keys()));
-
+        const key = `online ${user._id}`;
+        if (await redis.exists(`lastSeen ${user._id}`)) {
+          await redis.del(`lastSeen ${user._id}`);
+        }
+        await redis.set(key, socket.id);
         socket.join(user._id);
+        socket.userId = user._id.toString();
         socket.emit("connected");
       });
 
@@ -87,16 +89,9 @@ connectDb()
         socket.to(room).emit("stop typing", room);
       });
 
-      socket.on("disconnect", () => {
-        for (const [userId, socketId] of onlineUsers.entries()) {
-          if (socketId === socket.id) {
-            lastSeen.set(userId, new Date());
-            onlineUsers.delete(userId);
-            break;
-          }
-        }
-
-        io.emit("online-users", Array.from(onlineUsers.keys()));
+      socket.on("disconnect", async () => {
+        await redis.del(`online ${socket.userId}`);
+        await redis.set(`lastSeen ${socket.userId}`, Date.now());
       });
 
       socket.on("error", (error) => {

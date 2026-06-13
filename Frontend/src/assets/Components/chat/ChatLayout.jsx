@@ -252,13 +252,10 @@ function ChatLayout() {
           isAI: true,
         };
         setMessages((prev) => [...prev, aiMsg]);
-      } catch {
-        // optionally show an error bubble
-      }
-      return; // ← bail before real sendMessage logic
+      } catch {}
+      return;
     }
 
-    // Normal chat flow unchanged below
     if (socketRef.current)
       socketRef.current.emit("stop typing", selectedChat._id);
     try {
