@@ -19,6 +19,8 @@ const io = new Server(server, {
   },
   pingTimeout: 60000,
 });
+const onlineUsers = new Map();
+const lastSeen = new Map();
 
 connectDb()
   .then(() => {
@@ -32,6 +34,9 @@ connectDb()
           console.error("❌ Invalid user data in setup");
           return;
         }
+        onlineUsers.set(user._id.toString(), socket.id);
+        lastSeen.delete(user._id.toString());
+        io.emit("online-users", Array.from(onlineUsers.keys()));
 
         socket.join(user._id);
         socket.emit("connected");
@@ -82,7 +87,17 @@ connectDb()
         socket.to(room).emit("stop typing", room);
       });
 
-      socket.on("disconnect", () => {});
+      socket.on("disconnect", () => {
+        for (const [userId, socketId] of onlineUsers.entries()) {
+          if (socketId === socket.id) {
+            lastSeen.set(userId, new Date());
+            onlineUsers.delete(userId);
+            break;
+          }
+        }
+
+        io.emit("online-users", Array.from(onlineUsers.keys()));
+      });
 
       socket.on("error", (error) => {
         console.error("❌ Socket error:", error);
