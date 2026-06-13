@@ -52,6 +52,15 @@ connectDb()
 
         socket.join(room);
       });
+      socket.on("get-user-status", async (userId) => {
+        const online = await redis.exists(`online ${userId}`);
+        const lastSeen = await redis.get(`lastSeen ${userId}`);
+
+        socket.emit("user-status", {
+          online: !!online,
+          lastSeen,
+        });
+      });
 
       socket.on("leave room", (room) => {
         socket.leave(room);
@@ -90,6 +99,7 @@ connectDb()
       });
 
       socket.on("disconnect", async () => {
+        if (!socket.userId) return;
         await redis.del(`online ${socket.userId}`);
         await redis.set(`lastSeen ${socket.userId}`, Date.now());
       });
