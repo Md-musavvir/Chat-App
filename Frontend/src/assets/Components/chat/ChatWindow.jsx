@@ -11,6 +11,7 @@ function ChatWindow({
   fetchChats,
   isTyping,
   onTyping,
+  userStatus,
 }) {
   const bottomRef = useRef(null);
   const [input, setInput] = useState("");
@@ -168,7 +169,17 @@ function ChatWindow({
               <p className="text-xs text-slate-500">
                 {selectedChat.users.length} members
               </p>
-            ) : null}
+            ) : (
+              <p className="text-xs text-slate-500">
+                {userStatus.online
+                  ? "🟢 Online"
+                  : userStatus.lastSeen
+                    ? `Last seen ${new Date(
+                        Number(userStatus.lastSeen),
+                      ).toLocaleString()}`
+                    : "Offline"}
+              </p>
+            )}
           </div>
         </div>
       </div>

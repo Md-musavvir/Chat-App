@@ -20,6 +20,10 @@ function ChatLayout() {
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [userStatus, setUserStatus] = useState({
+    online: false,
+    lastSeen: null,
+  });
 
   const socketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -87,22 +91,48 @@ function ChatLayout() {
 
     const handleTypingEvent = () => setIsTyping(true);
     const handleStopTypingEvent = () => setIsTyping(false);
+    const handleUserStatus = (status) => {
+      setUserStatus(status);
+    };
 
     socketRef.current.on("message received", handleMessageReceived);
     socketRef.current.on("typing", handleTypingEvent);
     socketRef.current.on("stop typing", handleStopTypingEvent);
+    socketRef.current.on("user-status", handleUserStatus);
 
     return () => {
       if (socketRef.current) {
         socketRef.current.off("message received", handleMessageReceived);
         socketRef.current.off("typing", handleTypingEvent);
         socketRef.current.off("stop typing", handleStopTypingEvent);
+        socketRef.current.off("user-status", handleUserStatus);
       }
     };
   }, []);
 
   useEffect(() => {
     selectedChatCompareRef.current = selectedChat?._id;
+  }, [selectedChat]);
+  useEffect(() => {
+    setUserStatus({
+      online: false,
+      lastSeen: null,
+    });
+
+    if (
+      !selectedChat ||
+      selectedChat.isGroupChat ||
+      selectedChat.isAIChat ||
+      !socketRef.current
+    ) {
+      return;
+    }
+
+    const otherUser = selectedChat.users.find((u) => u._id !== user._id);
+
+    if (!otherUser) return;
+
+    socketRef.current.emit("get-user-status", otherUser._id);
   }, [selectedChat]);
 
   useEffect(() => {
@@ -189,16 +219,15 @@ function ChatLayout() {
       return;
     }
 
-    // ✅ CHANGE 1: Virtual AI chat has no DB messages
     if (chat?.isAIChat) {
       if (selectedChat && socketRef.current) {
         socketRef.current.emit("leave room", selectedChat._id);
       }
       setSelectedChat(chat);
-      setMessages([]); // clear previous chat messages
-      localStorage.removeItem("selectedChatId"); // don't persist virtual chat
+      setMessages([]);
+      localStorage.removeItem("selectedChatId");
       setIsMobileSidebarOpen(false);
-      return; // ← bail before any axios call
+      return;
     }
 
     try {
@@ -224,7 +253,6 @@ function ChatLayout() {
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken || !selectedChat) return;
 
-    // ✅ CHANGE 2: AI chat — build message locally, call LLM endpoint
     if (selectedChat.isAIChat) {
       const userMsg = {
         _id: `local_${Date.now()}`,
@@ -345,6 +373,7 @@ function ChatLayout() {
           fetchChats={fetchChats}
           isTyping={isTyping}
           onTyping={handleTyping}
+          userStatus={userStatus}
         />
       </div>
 
