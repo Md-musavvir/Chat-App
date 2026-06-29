@@ -20,7 +20,7 @@ const io = new Server(server, {
   },
   pingTimeout: 60000,
 });
-const redis = redisClient();
+const redis = redisClient;
 
 connectDb()
   .then(() => {
