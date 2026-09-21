@@ -15,7 +15,7 @@ const server = createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: true,
+    origin: "https://chat-app-blond-tau-56.vercel.app",
     credentials: true,
   },
   pingTimeout: 60000,
